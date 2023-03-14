@@ -4,15 +4,53 @@ import random
 import numpy as np
 import math
 
-NITERATIONS = 1
-NLARGESTGROUPS = 2
-UCT_CONSTANT = 1.41
+NITERATIONS = 100000
+UCT_CONSTANT = 1
 LOG_BASE = 10
+
+def enumeratePossibleMoves(game):
+    possibleMoves = []
+    for i in range(9):
+        for j in range(9):
+            for o in range(4):
+                if o == 0:
+                    isXWithinRange = i >= 0 and i < 9
+                    isYWithinRange = j >= 0 and j < 8
+                    if isXWithinRange and isYWithinRange:
+                        isUnoccupied = game.board[i][j] == 0 and game.board[i][j+1] == 0
+                        if isUnoccupied:
+                            possibleMoves.append(Tile(i, j, o))
+                elif o == 1:
+                    isXWithinRange = i >= 0 and i < 8
+                    isYWithinRange = j >= 0 and j < 9
+                    if isXWithinRange and isYWithinRange:
+                        isUnoccupied = game.board[i][j] == 0 and game.board[i+1][j] == 0
+                        if isUnoccupied:
+                            possibleMoves.append(Tile(i, j, o))
+                elif o == 2:
+                    isXWithinRange = i >= 0 and i < 9
+                    isYWithinRange = j >= 1 and j < 9
+                    if isXWithinRange and isYWithinRange:
+                        isUnoccupied = game.board[i][j] == 0 and game.board[i][j-1] == 0
+                        if isUnoccupied:
+                            possibleMoves.append(Tile(i, j, o))
+                elif o == 3:
+                    isXWithinRange = i >= 1 and i < 9
+                    isYWithinRange = j >= 0 and j < 9
+                    if isXWithinRange and isYWithinRange:
+                        isUnoccupied = game.board[i][j] == 0 and game.board[i-1][j] == 0
+                        if isUnoccupied:
+                            possibleMoves.append(Tile(i, j, o))
+    return possibleMoves
+
+def pickRandomMove(possibleMoves):
+    moveIndex = random.randint(0, len(possibleMoves)-1)
+    return moveIndex
 
 def makeRandomMove(game):
     tile = Tile(random.randint(0,8), random.randint(0,8), random.randint(0,3))
     while not(game.checkValidMove(tile.getRepresentation())):
-                tile = Tile(random.randint(0,8), random.randint(0,8), random.randint(0,3))
+        tile = Tile(random.randint(0,8), random.randint(0,8), random.randint(0,3))
     return tile
 
 class Node:
@@ -25,7 +63,9 @@ class Node:
         self.tile = tile
 
     def addChild(self):
-        tile = makeRandomMove(self.game)
+        possibleMoves = enumeratePossibleMoves(self.game)
+        moveIndex = pickRandomMove(possibleMoves)
+        tile = possibleMoves[moveIndex]
         newGame = Game(self.game.getBoard(), self.game.getTiles(), self.game.getPlayer())
         newGame.update(tile.getRepresentation())
         child = Node(newGame, self, tile)
@@ -37,11 +77,15 @@ def MCTS(startNode):
     N = NITERATIONS
     while isResourceLeft(N):
         selectedChild = select(startNode)
+        if selectedChild.game.isTerminal():
+            return selectedChild.tile
         newLeaf = expand(selectedChild)
+        if newLeaf.game.isTerminal():
+            return newLeaf.tile
         simulationResult = simulate(newLeaf)
         backPropagate(newLeaf, simulationResult)
         N -= 1
-        print(bestChild(startNode).tile.getRepresentation())
+    print(bestChild(startNode).tile.getRepresentation())
     return bestChild(startNode).tile
  
 # function for selection of best leaf
@@ -71,14 +115,16 @@ def expand(node):
 def simulate(node):
     # return win or lose of the game
     notSimEnded = True
-    duplicateGame = Game(node.game.getBoard(), node.game.getTiles(), node.game.getPlayer())
+    duplicateGame = Game(node.game.board, node.game.tiles, node.game.player)
     while (notSimEnded):
-        tile = makeRandomMove(duplicateGame)
+        possibleMoves = enumeratePossibleMoves(duplicateGame)
+        moveIndex = pickRandomMove(possibleMoves)
+        tile = possibleMoves[moveIndex]
         duplicateGame.update(tile.getRepresentation())
         notSimEnded = not duplicateGame.isTerminal()
     p1_scoreList = duplicateGame.generateScoreList(1)
     p2_scoreList = duplicateGame.generateScoreList(2)
-    finalScores = duplicateGame.calculateScore(p1_scoreList, p2_scoreList, NLARGESTGROUPS)
+    finalScores = duplicateGame.calculateScore(p1_scoreList, p2_scoreList)
     winner = duplicateGame.evaluateWinner(finalScores)
     return winner
  

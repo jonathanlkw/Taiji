@@ -2,8 +2,6 @@ from Game import *
 from Tile import *
 from TaijiAI import *
 
-NLARGESTGROUPS = 2
-
 def parseMove(move):
     moveList = move.split()
     moveDict = {"A": 1, "B": 2, "C": 3, "D": 4, "E": 5, "F": 6, "G": 7, "H": 8, "I": 9}
@@ -36,6 +34,7 @@ if __name__ == "__main__":
     print(game)
     while (notGameEnded):
         if game.getPlayer() == 1:
+            print("Player to move:")
             '''
             move = input("Enter row column orientation (e.g 5 A 0): ")
             moveParsed = parseMove(move)
@@ -44,7 +43,9 @@ if __name__ == "__main__":
             print(game)
             notGameEnded = not game.isTerminal()
             '''
-            tile = makeRandomMove(game)
+            possibleMoves = enumeratePossibleMoves(game)
+            moveIndex = pickRandomMove(possibleMoves)
+            tile = possibleMoves[moveIndex]
             game.update(tile.getRepresentation())
             print(game)
             notGameEnded = not game.isTerminal()
@@ -52,11 +53,8 @@ if __name__ == "__main__":
         elif game.getPlayer() == 2:
             print("Computer to move:")
             startNode = Node(game)
-            print("test:1")
             newTile = MCTS(startNode)
-            print("test:2")
             game.update(newTile.getRepresentation())
-            print("test:3")
             print(game)
             notGameEnded = not game.isTerminal()
 
@@ -65,7 +63,7 @@ if __name__ == "__main__":
     print(f"p1_scoreList: {p1_scoreList}")
     p2_scoreList = game.generateScoreList(2)
     print(f"p2_scoreList: {p2_scoreList}")
-    finalScores = game.calculateScore(p1_scoreList, p2_scoreList, NLARGESTGROUPS)
+    finalScores = game.calculateScore(p1_scoreList, p2_scoreList)
     winner = game.evaluateWinner(finalScores)
     if winner == 0:
         print("Draw")

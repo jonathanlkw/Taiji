@@ -1,92 +1,124 @@
 from Game import *
 from Tile import *
 import random
+import numpy as np
+import math
 
-def taijiAI(game):
+NITERATIONS = 1
+NLARGESTGROUPS = 2
+UCT_CONSTANT = 1.41
+LOG_BASE = 10
+
+def makeRandomMove(game):
     tile = Tile(random.randint(0,8), random.randint(0,8), random.randint(0,3))
     while not(game.checkValidMove(tile.getRepresentation())):
                 tile = Tile(random.randint(0,8), random.randint(0,8), random.randint(0,3))
     return tile
 
-Class Node:
-    def _init_(self):
-        self.parent=None
-        self.child=[]
-        self.win=0
-        self.played=0
-        self.state=[[],[],[]]
+class Node:
+    def __init__(self, game, parent=None, tile=None):
+        self.parent = parent
+        self.children = []
+        self.score = 0
+        self.played = 0
+        self.game = Game(game.getBoard(), game.getTiles(), game.getPlayer())
+        self.tile = tile
 
-root=Node()
-# add node function to add children to the node,
-
-def add_node(parent, child):
-    parent.child.append(child)
-    return parent 
-
-    
+    def addChild(self):
+        tile = makeRandomMove(self.game)
+        newGame = Game(self.game.getBoard(), self.game.getTiles(), self.game.getPlayer())
+        newGame.update(tile.getRepresentation())
+        child = Node(newGame, self, tile)
+        self.children.append(child)
+        return child
+        
 # main function for the Monte Carlo Tree Search
-def monte_carlo_tree_search(root):
-     
-    while resources_left(time, computational power):
-        leaf = select(root)
-        new_child=expand(leaf)
-        simulation_result = simulate(new_child)
-        backpropagate(leaf, simulation_result)
-         
-    return best_child(root)
+def MCTS(startNode):
+    N = NITERATIONS
+    while isResourceLeft(N):
+        selectedChild = select(startNode)
+        newLeaf = expand(selectedChild)
+        simulationResult = simulate(newLeaf)
+        backPropagate(newLeaf, simulationResult)
+        N -= 1
+        print(bestChild(startNode).tile.getRepresentation())
+    return bestChild(startNode).tile
  
 # function for selection of best leaf
+def traverse(parent, uctList, nodeList):
+    uctList.append(calcUCT(parent))
+    nodeList.append(parent)
+
+    if len(parent.children) != 0:
+        for node in parent.children:
+            uctList.append(calcUCT(node))
+            nodeList.append(node)
+            traverse(node, uctList, nodeList)
+    return
+
 def select(node):
-    while fully_expanded(node):
-        node = best_uct(node)
-        node = worst_uct(node)
-         
-    # in case no children are present / node is terminal
-    return pick_unvisited(node.children) or leaf
- 
+    uctList = []
+    nodeList = []
+    traverse(node, uctList, nodeList)
+    maxIndex = np.argmax(uctList)
+    return nodeList[maxIndex]
+
 # function for the result of the simulation
-def expand(leaf):
-    new_child=Node()
-    new_child.parent=leaf
-    # the random move generate a random valid next move, and add that game state to the node
-    new_child.state=random_move(new_child)
-    return new_child
- 
+def expand(node):
+    return node.addChild()
+
 # function for randomly selecting a child node
-def simulate(new_child):
+def simulate(node):
     # return win or lose of the game
-    
-    return random_game(new_child)
+    notSimEnded = True
+    duplicateGame = Game(node.game.getBoard(), node.game.getTiles(), node.game.getPlayer())
+    while (notSimEnded):
+        tile = makeRandomMove(duplicateGame)
+        duplicateGame.update(tile.getRepresentation())
+        notSimEnded = not duplicateGame.isTerminal()
+    p1_scoreList = duplicateGame.generateScoreList(1)
+    p2_scoreList = duplicateGame.generateScoreList(2)
+    finalScores = duplicateGame.calculateScore(p1_scoreList, p2_scoreList, NLARGESTGROUPS)
+    winner = duplicateGame.evaluateWinner(finalScores)
+    return winner
  
 # function for backpropagation
-def backpropagate(node, result):
-    if is_root(node) return
-    node.stats = update_stats(node, result)
-    backpropagate(node.parent)
+def backPropagate(node, result):
+    player = node.game.getPlayer
+    if player == 1:
+        if result == 1:
+            node.score += 1
+    elif player == 2:
+        if result == 2:
+            node.score += 1
+    node.played += 1
+    if node.parent == None:
+        return
+    else:
+        backPropagate(node.parent, result)
  
 # function for selecting the best child
-def best_uct(node):
-    highest=0
-    best_child=None
-    for i in node.children:
-        exploitation=node.win/node.played
-        exploration=C*math.sqrt(node.parent.played/node.played)
-        utility=exploitation+exploration
-        if utility>highest:
-            highest=utility
-            best_child=i
-    return i
-# function for selecting the worst uct
-def worst_uct(node):
-    highest=0
-    best_child=None
-    for i in node.children:
-        exploitation=node.win/node.played
-        exploration=C*math.sqrt(node.parent.played/node.played)
-        utility=exploitation+exploration
-        if utility>highest:
-            highest=utility
-            best_child=i
-    return i
+def calcUCT(node):
+    if node.parent != None:
+        exploitation = node.score/node.played
+        exploration = UCT_CONSTANT * math.sqrt(math.log(node.parent.played, LOG_BASE)/node.played)
+        utility = exploitation + exploration
+        return utility
+    else:
+        return 0
 
-def best_child(root)
+def bestChild(node):
+    maxPlayout = 0
+    selectedNode = None
+    for child in node.children:
+        if maxPlayout < child.played:
+            maxPlayout = child.played
+            selectedNode = child
+    return selectedNode
+
+def isResourceLeft(N):
+    if N == 0:
+        return False
+    else:
+        return True
+

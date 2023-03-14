@@ -1,8 +1,8 @@
 class Game:
-    def __init__(self):
-        self.__board = [[0 for x in range(9)] for y in range(9)]
-        self.__tiles = []
-        self.__player = 1
+    def __init__(self, board=[[0 for x in range(9)] for y in range(9)], tiles=[], player=1):
+        self.__board = board
+        self.__tiles = tiles
+        self.__player = player
 
     def setBoard(self, board):
         self.__board = board

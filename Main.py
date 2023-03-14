@@ -34,7 +34,6 @@ if __name__ == "__main__":
     game.setPlayer(int(playerToStart))
 
     print(game)
-
     while (notGameEnded):
         if game.getPlayer() == 1:
             '''
@@ -45,15 +44,19 @@ if __name__ == "__main__":
             print(game)
             notGameEnded = not game.isTerminal()
             '''
-            tile = taijiAI(game)
+            tile = makeRandomMove(game)
             game.update(tile.getRepresentation())
             print(game)
             notGameEnded = not game.isTerminal()
             
         elif game.getPlayer() == 2:
             print("Computer to move:")
-            tile = taijiAI(game)
-            game.update(tile.getRepresentation())
+            startNode = Node(game)
+            print("test:1")
+            newTile = MCTS(startNode)
+            print("test:2")
+            game.update(newTile.getRepresentation())
+            print("test:3")
             print(game)
             notGameEnded = not game.isTerminal()
 

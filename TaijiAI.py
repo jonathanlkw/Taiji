@@ -107,6 +107,19 @@ def select(node):
     maxIndex = np.argmax(uctList)
     return nodeList[maxIndex]
 
+# def select(node):
+#     uctList = []
+#     nodeList = []
+#     for child in node.children:
+#         N_parent = node.played
+#         N = child.played
+#         Q = child.score
+#         D = 0.5
+#         UCT = Q / N + UCT_CONSTANT * math.sqrt(math.log(N_parent) / (1 + N)) + D * math.sqrt(math.log(N_parent) / (1 + N))
+#         uctList.append(UCT)
+#         nodeList.append(child)
+#     maxIndex = np.argmax(uctList)
+#     return nodeList[maxIndex]
 # function for the result of the simulation
 def expand(node):
     return node.addChild()
@@ -146,12 +159,31 @@ def backPropagate(node, result):
 # function for selecting the best child
 def calcUCT(node):
     if node.parent != None:
+        distance = 0
         exploitation = node.score/node.played
         exploration = UCT_CONSTANT * math.sqrt(math.log(node.parent.played, LOG_BASE)/node.played)
         utility = exploitation + exploration
-        return utility
+       #for tile in node.parent:
+            #print("hello")
+        if (node.tile != None and node.parent.tile != None):
+            dx = abs(node.parent.tile.pos_x - node.tile.pos_x)
+            dy = abs(node.parent.tile.pos_y - node.tile.pos_y)
+            distance += math.sqrt(dx**2 + dy**2)
+            return utility * 1/( 1+ distance)
+        else:
+            return utility * (1 / (1 + 11.3137))
     else:
         return 0
+#normal implementation
+# def calcUCT(node):
+#     if node.parent != None:
+#         distance = 0
+#         exploitation = node.score/node.played
+#         exploration = UCT_CONSTANT * math.sqrt(math.log(node.parent.played, LOG_BASE)/node.played)
+#         utility = exploitation + exploration
+#         return utility
+#     else:
+#        return 0
 
 def bestChild(node):
     maxPlayout = 0

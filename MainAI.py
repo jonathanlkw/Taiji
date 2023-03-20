@@ -2,7 +2,7 @@ from Game import *
 from Tile import *
 from TaijiAI import *
 
-NUMTESTS = 50
+NUMTESTS = 100
 
 def updateCurrentNode(node, tile):
     for child in node.children:
@@ -33,7 +33,7 @@ if __name__ == "__main__":
 
         while (notGameEnded):
             if game.getPlayer() == 1:
-                possibleMoves = enumeratePossibleMoves(game)
+                possibleMoves = enumeratePossibleMoves(game, currentNode.tile)
                 moveIndex = pickRandomMove(possibleMoves)
                 tile = possibleMoves[moveIndex]
                 game.update(tile.getRepresentation())

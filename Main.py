@@ -45,21 +45,22 @@ if __name__ == "__main__":
     while (notGameEnded):
         if game.getPlayer() == 1:
             print("Player to move:")
-            '''
+            
             move = input("Enter row column orientation (e.g 5 A 0): ")
             moveParsed = parseMove(move)
             tile = Tile(moveParsed[0], moveParsed[1], moveParsed[2])
             game.update(tile.getRepresentation())
             print(game)
-            notGameEnded = not game.isTerminal()
-            '''
-            possibleMoves = enumeratePossibleMoves(game)
-            moveIndex = pickRandomMove(possibleMoves)
-            tile = possibleMoves[moveIndex]
-            game.update(tile.getRepresentation())
-            print(game)
             currentNode = updateCurrentNode(currentNode, tile)
             notGameEnded = not game.isTerminal()
+            
+            # possibleMoves = enumeratePossibleMoves(game, currentNode.tile)
+            # moveIndex = pickRandomMove(possibleMoves)
+            # tile = possibleMoves[moveIndex]
+            # game.update(tile.getRepresentation())
+            # print(game)
+            # currentNode = updateCurrentNode(currentNode, tile)
+            # notGameEnded = not game.isTerminal()
             
         elif game.getPlayer() == 2:
             print("Computer to move:")

@@ -5,12 +5,18 @@ import numpy as np
 import math
 import time
 
-# NITERATIONS = 100000
-MOVETIMER = 1.0
+MOVETIMER = 2.0
 UCT_CONSTANT = 1.41
 LOG_BASE = 2.72
 
-def enumeratePossibleMoves(game):
+def enumeratePossibleMoves(game, tile):
+    if tile != None:
+        x = tile.getPos_x()
+        y = tile.getPos_y()
+    else:
+        x = 5
+        y = 5
+
     possibleMoves = []
     for i in range(9):
         for j in range(9):
@@ -21,28 +27,44 @@ def enumeratePossibleMoves(game):
                     if isXWithinRange and isYWithinRange:
                         isUnoccupied = game.board[i][j] == 0 and game.board[i][j+1] == 0
                         if isUnoccupied:
-                            possibleMoves.append(Tile(i, j, o))
+                            dx = i - x
+                            dy = j - y
+                            distance = math.sqrt(dx*dx + dy*dy)
+                            for d in range(12 - math.floor(distance)):
+                                possibleMoves.append(Tile(i, j, o))
                 elif o == 1:
                     isXWithinRange = i >= 0 and i < 8
                     isYWithinRange = j >= 0 and j < 9
                     if isXWithinRange and isYWithinRange:
                         isUnoccupied = game.board[i][j] == 0 and game.board[i+1][j] == 0
                         if isUnoccupied:
-                            possibleMoves.append(Tile(i, j, o))
+                            dx = i - x
+                            dy = j - y
+                            distance = math.sqrt(dx*dx + dy*dy)
+                            for d in range(24 - 2*math.floor(distance)):
+                                possibleMoves.append(Tile(i, j, o))
                 elif o == 2:
                     isXWithinRange = i >= 0 and i < 9
                     isYWithinRange = j >= 1 and j < 9
                     if isXWithinRange and isYWithinRange:
                         isUnoccupied = game.board[i][j] == 0 and game.board[i][j-1] == 0
                         if isUnoccupied:
-                            possibleMoves.append(Tile(i, j, o))
+                            dx = i - x
+                            dy = j - y
+                            distance = math.sqrt(dx*dx + dy*dy)
+                            for d in range(24 - 2*math.floor(distance)):
+                                possibleMoves.append(Tile(i, j, o))
                 elif o == 3:
                     isXWithinRange = i >= 1 and i < 9
                     isYWithinRange = j >= 0 and j < 9
                     if isXWithinRange and isYWithinRange:
                         isUnoccupied = game.board[i][j] == 0 and game.board[i-1][j] == 0
                         if isUnoccupied:
-                            possibleMoves.append(Tile(i, j, o))
+                            dx = i - x
+                            dy = j - y
+                            distance = math.sqrt(dx*dx + dy*dy)
+                            for d in range(24 - 2*math.floor(distance)):
+                                possibleMoves.append(Tile(i, j, o))
     return possibleMoves
 
 def pickRandomMove(possibleMoves):
@@ -66,7 +88,7 @@ class Node:
         self.tile = tile
 
     def addChild(self):
-        possibleMoves = enumeratePossibleMoves(self.game)
+        possibleMoves = enumeratePossibleMoves(self.game, self.tile)
         moveIndex = pickRandomMove(possibleMoves)
         tile = possibleMoves[moveIndex]
         newGame = Game(self.game.getBoard(), self.game.getTiles(), self.game.getPlayer())
@@ -85,12 +107,9 @@ class Node:
         
 # main function for the Monte Carlo Tree Search
 def MCTS(startNode):
-    # N = NITERATIONS
     startTime = time.time()
-    # print(f"startTime: {startTime}")
     currentTime = time.time()
     while (currentTime - startTime) < MOVETIMER:
-        # print(f"currentTime: {currentTime}")
         selectedChild = select(startNode)
         if selectedChild.game.isTerminal():
             return selectedChild.tile
@@ -99,10 +118,8 @@ def MCTS(startNode):
             return newLeaf.tile
         simulationResult = simulate(newLeaf)
         backPropagate(newLeaf, simulationResult)
-        # N -= 1
         currentTime = time.time()
     
-    #print(bestChild(startNode).tile.getRepresentation())
     return bestChild(startNode).tile
  
 # function for selection of best leaf
@@ -148,7 +165,7 @@ def simulate(node):
     notSimEnded = True
     duplicateGame = Game(node.game.board, node.game.tiles, node.game.player)
     while (notSimEnded):
-        possibleMoves = enumeratePossibleMoves(duplicateGame)
+        possibleMoves = enumeratePossibleMoves(duplicateGame, node.tile)
         moveIndex = pickRandomMove(possibleMoves)
         tile = possibleMoves[moveIndex]
         duplicateGame.update(tile.getRepresentation())

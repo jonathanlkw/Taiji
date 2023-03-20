@@ -13,6 +13,12 @@ def parseMove(move):
         print("Invalid input, please try again")
     return moveList
 
+def updateCurrentNode(node, tile):
+    for child in node.children:
+        if child.tile == tile:
+            return child
+    return node.addSpecificChild(tile)
+
 if __name__ == "__main__":
     print("Rows are labeled A-I while columns are labeled 1-9")
     print("Position of tile is the coordinate of the white side of the tile")
@@ -32,6 +38,10 @@ if __name__ == "__main__":
     game.setPlayer(int(playerToStart))
 
     print(game)
+
+    rootNode = Node(game)
+    currentNode = rootNode
+
     while (notGameEnded):
         if game.getPlayer() == 1:
             print("Player to move:")
@@ -48,14 +58,15 @@ if __name__ == "__main__":
             tile = possibleMoves[moveIndex]
             game.update(tile.getRepresentation())
             print(game)
+            currentNode = updateCurrentNode(currentNode, tile)
             notGameEnded = not game.isTerminal()
             
         elif game.getPlayer() == 2:
             print("Computer to move:")
-            startNode = Node(game)
-            newTile = MCTS(startNode)
+            newTile = MCTS(currentNode)
             game.update(newTile.getRepresentation())
             print(game)
+            currentNode = updateCurrentNode(currentNode, newTile)
             notGameEnded = not game.isTerminal()
 
     print("Game Ended")

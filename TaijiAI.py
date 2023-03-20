@@ -3,10 +3,12 @@ from Tile import *
 import random
 import numpy as np
 import math
+import time
 
-NITERATIONS = 100000
-UCT_CONSTANT = 1
-LOG_BASE = 10
+# NITERATIONS = 100000
+MOVETIMER = 1.0
+UCT_CONSTANT = 1.41
+LOG_BASE = 2.72
 
 def enumeratePossibleMoves(game):
     possibleMoves = []
@@ -47,6 +49,7 @@ def pickRandomMove(possibleMoves):
     moveIndex = random.randint(0, len(possibleMoves)-1)
     return moveIndex
 
+# legacy function for generating random moves
 def makeRandomMove(game):
     tile = Tile(random.randint(0,8), random.randint(0,8), random.randint(0,3))
     while not(game.checkValidMove(tile.getRepresentation())):
@@ -71,11 +74,23 @@ class Node:
         child = Node(newGame, self, tile)
         self.children.append(child)
         return child
+    
+    def addSpecificChild(self, chosenTile):
+        tile = chosenTile
+        newGame = Game(self.game.getBoard(), self.game.getTiles(), self.game.getPlayer())
+        newGame.update(tile.getRepresentation())
+        child = Node(newGame, self, tile)
+        self.children.append(child)
+        return child
         
 # main function for the Monte Carlo Tree Search
 def MCTS(startNode):
-    N = NITERATIONS
-    while isResourceLeft(N):
+    # N = NITERATIONS
+    startTime = time.time()
+    # print(f"startTime: {startTime}")
+    currentTime = time.time()
+    while (currentTime - startTime) < MOVETIMER:
+        # print(f"currentTime: {currentTime}")
         selectedChild = select(startNode)
         if selectedChild.game.isTerminal():
             return selectedChild.tile
@@ -84,8 +99,10 @@ def MCTS(startNode):
             return newLeaf.tile
         simulationResult = simulate(newLeaf)
         backPropagate(newLeaf, simulationResult)
-        N -= 1
-    print(bestChild(startNode).tile.getRepresentation())
+        # N -= 1
+        currentTime = time.time()
+    
+    #print(bestChild(startNode).tile.getRepresentation())
     return bestChild(startNode).tile
  
 # function for selection of best leaf
@@ -121,6 +138,7 @@ def select(node):
 #     maxIndex = np.argmax(uctList)
 #     return nodeList[maxIndex]
 # function for the result of the simulation
+
 def expand(node):
     return node.addChild()
 
@@ -157,33 +175,33 @@ def backPropagate(node, result):
         backPropagate(node.parent, result)
  
 # function for selecting the best child
-def calcUCT(node):
-    if node.parent != None:
-        distance = 0
-        exploitation = node.score/node.played
-        exploration = UCT_CONSTANT * math.sqrt(math.log(node.parent.played, LOG_BASE)/node.played)
-        utility = exploitation + exploration
-       #for tile in node.parent:
-            #print("hello")
-        if (node.tile != None and node.parent.tile != None):
-            dx = abs(node.parent.tile.pos_x - node.tile.pos_x)
-            dy = abs(node.parent.tile.pos_y - node.tile.pos_y)
-            distance += math.sqrt(dx**2 + dy**2)
-            return utility * 1/( 1+ distance)
-        else:
-            return utility * (1 / (1 + 11.3137))
-    else:
-        return 0
-#normal implementation
 # def calcUCT(node):
 #     if node.parent != None:
 #         distance = 0
 #         exploitation = node.score/node.played
 #         exploration = UCT_CONSTANT * math.sqrt(math.log(node.parent.played, LOG_BASE)/node.played)
 #         utility = exploitation + exploration
-#         return utility
+#        #for tile in node.parent:
+#             #print("hello")
+#         if (node.tile != None and node.parent.tile != None):
+#             dx = abs(node.parent.tile.pos_x - node.tile.pos_x)
+#             dy = abs(node.parent.tile.pos_y - node.tile.pos_y)
+#             distance += math.sqrt(dx**2 + dy**2)
+#             return utility * 1/( 1+ distance)
+#         else:
+#             return utility * (1 / (1 + 11.3137))
 #     else:
-#        return 0
+#         return 0
+        
+#normal implementation
+def calcUCT(node):
+    if node.parent != None and node.played != 0:
+        exploitation = node.score/node.played
+        exploration = UCT_CONSTANT * math.sqrt(math.log(node.parent.played, LOG_BASE)/node.played)
+        utility = exploitation + exploration
+        return utility
+    else:
+        return 0
 
 def bestChild(node):
     maxPlayout = 0
@@ -194,9 +212,9 @@ def bestChild(node):
             selectedNode = child
     return selectedNode
 
-def isResourceLeft(N):
-    if N == 0:
-        return False
-    else:
-        return True
+# def isResourceLeft(N):
+#     if N == 0:
+#         return False
+#     else:
+#         return True
 

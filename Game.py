@@ -5,7 +5,7 @@ NLARGESTGROUPS = 2
 class Game:
     def __init__(self, board=[[0 for x in range(9)] for y in range(9)], tiles=[], player=1):
         self.board = copy.deepcopy(board)
-        self.tiles = copy.deepcopy(tiles)
+        self.tiles = copy.deepcopy(tiles) # Currently unused (intended for UI implementation)
         self.player = player
 
     def setBoard(self, board):

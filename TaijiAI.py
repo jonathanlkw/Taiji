@@ -5,9 +5,8 @@ import numpy as np
 import math
 import time
 
-MOVETIMER = 2.0
+MOVETIMER = 5.0
 UCT_CONSTANT = 1.41
-LOG_BASE = 2.72
 
 def enumeratePossibleMoves(game, tile):
     if tile != None:
@@ -27,48 +26,51 @@ def enumeratePossibleMoves(game, tile):
                     if isXWithinRange and isYWithinRange:
                         isUnoccupied = game.board[i][j] == 0 and game.board[i][j+1] == 0
                         if isUnoccupied:
-                            dx = i - x
-                            dy = j - y
-                            distance = math.sqrt(dx*dx + dy*dy)
-                            for d in range(12 - math.floor(distance)):
-                                possibleMoves.append(Tile(i, j, o))
+                            # dx = i - x
+                            # dy = j - y
+                            # distance = math.sqrt(dx*dx + dy*dy)
+                            # for d in range(12 - math.floor(distance)):
+                            possibleMoves.append(Tile(i, j, o))
                 elif o == 1:
                     isXWithinRange = i >= 0 and i < 8
                     isYWithinRange = j >= 0 and j < 9
                     if isXWithinRange and isYWithinRange:
                         isUnoccupied = game.board[i][j] == 0 and game.board[i+1][j] == 0
                         if isUnoccupied:
-                            dx = i - x
-                            dy = j - y
-                            distance = math.sqrt(dx*dx + dy*dy)
-                            for d in range(24 - 2*math.floor(distance)):
-                                possibleMoves.append(Tile(i, j, o))
+                            # dx = i - x
+                            # dy = j - y
+                            # distance = math.sqrt(dx*dx + dy*dy)
+                            # for d in range(24 - 2*math.floor(distance)):
+                            possibleMoves.append(Tile(i, j, o))
                 elif o == 2:
                     isXWithinRange = i >= 0 and i < 9
                     isYWithinRange = j >= 1 and j < 9
                     if isXWithinRange and isYWithinRange:
                         isUnoccupied = game.board[i][j] == 0 and game.board[i][j-1] == 0
                         if isUnoccupied:
-                            dx = i - x
-                            dy = j - y
-                            distance = math.sqrt(dx*dx + dy*dy)
-                            for d in range(24 - 2*math.floor(distance)):
-                                possibleMoves.append(Tile(i, j, o))
+                            # dx = i - x
+                            # dy = j - y
+                            # distance = math.sqrt(dx*dx + dy*dy)
+                            # for d in range(24 - 2*math.floor(distance)):
+                            possibleMoves.append(Tile(i, j, o))
                 elif o == 3:
                     isXWithinRange = i >= 1 and i < 9
                     isYWithinRange = j >= 0 and j < 9
                     if isXWithinRange and isYWithinRange:
                         isUnoccupied = game.board[i][j] == 0 and game.board[i-1][j] == 0
                         if isUnoccupied:
-                            dx = i - x
-                            dy = j - y
-                            distance = math.sqrt(dx*dx + dy*dy)
-                            for d in range(24 - 2*math.floor(distance)):
-                                possibleMoves.append(Tile(i, j, o))
+                            # dx = i - x
+                            # dy = j - y
+                            # distance = math.sqrt(dx*dx + dy*dy)
+                            # for d in range(24 - 2*math.floor(distance)):
+                            possibleMoves.append(Tile(i, j, o))
     return possibleMoves
 
 def pickRandomMove(possibleMoves):
-    moveIndex = random.randint(0, len(possibleMoves)-1)
+    if len(possibleMoves) == 1:
+        moveIndex = possibleMoves[0]
+    else:
+        moveIndex = random.randint(0, len(possibleMoves)-1)
     return moveIndex
 
 # legacy function for generating random moves
@@ -107,19 +109,19 @@ class Node:
         
 # main function for the Monte Carlo Tree Search
 def MCTS(startNode):
-    startTime = time.time()
-    currentTime = time.time()
-    while (currentTime - startTime) < MOVETIMER:
+    timeLeft = MOVETIMER
+    while timeLeft > 0:
+        startTime = time.time()
         selectedChild = select(startNode)
-        if selectedChild.game.isTerminal():
-            return selectedChild.tile
-        newLeaf = expand(selectedChild)
-        if newLeaf.game.isTerminal():
-            return newLeaf.tile
-        simulationResult = simulate(newLeaf)
+        if not selectedChild.game.isTerminal():
+            newLeaf = expand(selectedChild)
+            simulationResult = simulate(newLeaf)
+        else:
+            simulationResult = simulate(selectedChild)
         backPropagate(newLeaf, simulationResult)
         currentTime = time.time()
-    
+        timeElapsed = currentTime - startTime
+        timeLeft -= timeElapsed
     return bestChild(startNode).tile
  
 # function for selection of best leaf
@@ -162,7 +164,7 @@ def expand(node):
 # function for randomly selecting a child node
 def simulate(node):
     # return win or lose of the game
-    notSimEnded = True
+    notSimEnded = not node.game.isTerminal()
     duplicateGame = Game(node.game.board, node.game.tiles, node.game.player)
     while (notSimEnded):
         possibleMoves = enumeratePossibleMoves(duplicateGame, node.tile)
@@ -214,7 +216,7 @@ def backPropagate(node, result):
 def calcUCT(node):
     if node.parent != None and node.played != 0:
         exploitation = node.score/node.played
-        exploration = UCT_CONSTANT * math.sqrt(math.log(node.parent.played, LOG_BASE)/node.played)
+        exploration = UCT_CONSTANT * math.sqrt(math.log(node.parent.played)/node.played)
         utility = exploitation + exploration
         return utility
     else:

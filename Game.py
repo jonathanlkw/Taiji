@@ -90,16 +90,28 @@ class Game:
         isConnected = self.board[pos_x][pos_y] == player
         if isConnected == 0:
             return 0
+        if searched[pos_x][pos_y] == 1:
+            return 0
         else:
             searched[pos_x][pos_y] = 1
-            if pos_x == 8:
-                if pos_y == 8:
-                    return 1
-                return 1 + self.calcGroupSize(pos_x, pos_y+1, player, searched)
-            elif pos_y == 8:
-                return 1 + self.calcGroupSize(pos_x+1, pos_y, player, searched)
+            if (pos_x == 0 and pos_y == 0):
+                return 1 + self.calcGroupSize(pos_x+1, pos_y, player, searched) + self.calcGroupSize(pos_x, pos_y+1, player, searched)
+            elif (pos_x == 8 and pos_y == 8):
+                return 1 + self.calcGroupSize(pos_x-1, pos_y, player, searched) + self.calcGroupSize(pos_x, pos_y-1, player, searched)
+            elif (pos_x == 0 and pos_y == 8):
+                return 1 + self.calcGroupSize(pos_x+1, pos_y, player, searched) + self.calcGroupSize(pos_x, pos_y-1, player, searched)
+            elif (pos_x == 8 and pos_y == 0):
+                return 1 + self.calcGroupSize(pos_x-1, pos_y, player, searched) + self.calcGroupSize(pos_x, pos_y+1, player, searched)
+            elif (pos_x == 0):
+                return 1 + self.calcGroupSize(pos_x+1, pos_y, player, searched) + self.calcGroupSize(pos_x, pos_y+1, player, searched) + self.calcGroupSize(pos_x, pos_y-1, player, searched)
+            elif (pos_y == 0):
+                return 1 + self.calcGroupSize(pos_x+1, pos_y, player, searched) + self.calcGroupSize(pos_x-1, pos_y, player, searched) + self.calcGroupSize(pos_x, pos_y+1, player, searched)
+            elif (pos_x == 8):
+                return 1 + self.calcGroupSize(pos_x-1, pos_y, player, searched) + self.calcGroupSize(pos_x, pos_y+1, player, searched) + self.calcGroupSize(pos_x, pos_y-1, player, searched)
+            elif (pos_y == 8):
+                return 1 + self.calcGroupSize(pos_x+1, pos_y, player, searched) + self.calcGroupSize(pos_x-1, pos_y, player, searched) + self.calcGroupSize(pos_x, pos_y-1, player, searched)
             else:
-                return self.calcGroupSize(pos_x+1, pos_y, player, searched) + self.calcGroupSize(pos_x, pos_y+1, player, searched)
+                return 1 + self.calcGroupSize(pos_x+1, pos_y, player, searched) + self.calcGroupSize(pos_x-1, pos_y, player, searched) + self.calcGroupSize(pos_x, pos_y+1, player, searched) + self.calcGroupSize(pos_x, pos_y-1, player, searched)
             
     def generateScoreList(self, player):
         searched = [[0 for x in range(9)] for y in range(9)]
@@ -123,7 +135,7 @@ class Game:
     def evaluateWinner(self, scores):
         if scores[0] > scores[1]:
             return 1
-        elif scores [0] < scores[1]:
+        elif scores[0] < scores[1]:
             return 2
         else:
             return 0

@@ -8,6 +8,6 @@ To run the single-player mode against the AI, run `Main.py` in the command line 
 
 Main.py can also be run from any IDE with python 3.7 installed.
 
-To run the test-runs for estimating win rates, replace `Main.py` in the above command with `MainAI.py`.
+To run the test-runs for estimating win rates against a random opponent, replace `Main.py` in the above command with `MainAI.py`.
 
 `MainUI.py` is currently not in use.
